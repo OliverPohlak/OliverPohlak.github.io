@@ -1,7 +1,7 @@
 const SCHOOL_DOMAIN = '01.kood.tech'
 const GRAPHQL_ENDPOINT = `https://${SCHOOL_DOMAIN}/api/graphql-engine/v1/graphql`
 
-const student = {
+const user = {
     id: 0,
     login: 'OliverPohlak',
     totalXP: 0,
@@ -33,11 +33,11 @@ const parseUserInfo = async () => {
             }
         }`,
         {
-            login: student.login,
+            login: user.login,
         }
     )
-    student.id = obj.data.user[0].id
-    student.login = obj.data.user[0].login
+    user.id = obj.data.user[0].id
+    user.login = obj.data.user[0].login
 }
 
 const parseTransactions = async () => {
@@ -62,18 +62,18 @@ const parseTransactions = async () => {
                 }
             }`,
             {
-                login: student.login,
+                login: user.login,
                 offset: offset
             }
         )
-        student.transactions.push(...obj.data.transaction)
+        user.transactions.push(...obj.data.transaction)
         offset += 50
         if (obj.data.transaction.length < 50) {
             offset = 0
             break
         }
     }
-    student.transactions.sort((a, b) =>
+    user.transactions.sort((a, b) =>
         new Date(a.createdAt) > new Date(b.createdAt) ? 1 : -1
     )
 }
@@ -99,11 +99,11 @@ const parseProgresses = async () => {
                 }
             }`,
             {
-                login: student.login,
+                login: user.login,
                 offset: offset,
             }
         )
-        student.progresses.push(...obj.data.progress)
+        user.progresses.push(...obj.data.progress)
         offset += 50
         if (obj.data.progress.length < 50) {
             offset = 0
@@ -113,8 +113,8 @@ const parseProgresses = async () => {
 }
 
 const parseProjectsBaseXP = () => {
-    student.transactions.forEach(transaction => {
-        if (student.progresses.find(progress => progress.object.id == transaction.object.id)) {
+    user.transactions.forEach(transaction => {
+        if (user.progresses.find(progress => progress.object.id == transaction.object.id)) {
             if (!projectsBaseXP[transaction.object.id]) {
                 projectsBaseXP[transaction.object.id] = transaction.amount
             } else if (projectsBaseXP[transaction.object.id] < transaction.amount) {
@@ -125,25 +125,25 @@ const parseProjectsBaseXP = () => {
 }
 
 const parseDoneProjects = () => {
-    student.transactions.forEach(transaction => {
+    user.transactions.forEach(transaction => {
         const projectBaseXP = projectsBaseXP[transaction.object.id]
         if (projectsBaseXP && projectBaseXP == transaction.amount) {
-            student.totalXP += projectBaseXP
-            const newLevel = getLevelFromXp(student.totalXP)
-            if (newLevel > student.level) {
-                student.level = newLevel
+            user.totalXP += projectBaseXP
+            const newLevel = getLevelFromXp(user.totalXP)
+            if (newLevel > user.level) {
+                user.level = newLevel
                 levelChanges.push({ level: newLevel, date: new Date(transaction.createdAt) })
             }
-            student.doneProjects.push({
+            user.doneProjects.push({
                 id: transaction.object.id,
                 name: transaction.object.name,
                 baseXP: projectBaseXP,
-                totalXP: student.totalXP,
+                totalXP: user.totalXP,
                 date: new Date(transaction.createdAt)
             })
         }
     })
-    student.doneProjects.sort((a, b) => a.date > b.date ? 1 : -1 )
+    user.doneProjects.sort((a, b) => a.date > b.date ? 1 : -1 )
 }
 
 function getLevelFromXp(xp) {
@@ -182,8 +182,8 @@ const getMonths = (fromDate, toDate) => {
 }
 
 const fillGraphs = (xpOverTimeGraph, levelOverTimeGraph) => {
-    const firstDate = getFirstDayOfMonth(student.doneProjects[0].date)
-    const lastDate = getFirstDayOfNextMonth(student.doneProjects[student.doneProjects.length - 1].date)
+    const firstDate = getFirstDayOfMonth(user.doneProjects[0].date)
+    const lastDate = getFirstDayOfNextMonth(user.doneProjects[user.doneProjects.length - 1].date)
     const firstAndLastDateDiff = lastDate.getTime() - firstDate.getTime()
     const months = getMonths(firstDate, lastDate)
 
@@ -201,28 +201,28 @@ const fillGraphs = (xpOverTimeGraph, levelOverTimeGraph) => {
     for (let i = 0; i <= 10; i++) {
         const x = xpOverTimeGraph.leftOffset * 0.8
         const y = (i == 0 ? 0 : xpOverTimeGraph.height * (i / 10)) + 5
-        const text = (i == 10 ? 0 : Math.round(student.totalXP * (1 - (i / 10)))).toLocaleString()
+        const text = (i == 10 ? 0 : Math.round(user.totalXP * (1 - (i / 10)))).toLocaleString()
         const type = 'y-label'
         xpOverTimeGraph.labels.push({ x, y, text, type })
     }
 
     //levels
-    for (let i = 0; i <= student.level; i++) {
+    for (let i = 0; i <= user.level; i++) {
         const x = levelOverTimeGraph.leftOffset * 0.8
-        const y = (i == 0 ? levelOverTimeGraph.height : (levelOverTimeGraph.height * (1 - (i / student.level)))) + 5
+        const y = (i == 0 ? levelOverTimeGraph.height : (levelOverTimeGraph.height * (1 - (i / user.level)))) + 5
         const text = i
         const type = 'y-label'
         levelOverTimeGraph.labels.push({ x, y, text, type })
     }
 
     //exp over date
-    for (let i = 1; i < student.doneProjects.length; i++) {
-        const curr = student.doneProjects[i]
-        const prev = student.doneProjects[i - 1]
+    for (let i = 1; i < user.doneProjects.length; i++) {
+        const curr = user.doneProjects[i]
+        const prev = user.doneProjects[i - 1]
         const x1 = (prev.date.getTime() - firstDate) / firstAndLastDateDiff * xpOverTimeGraph.width
         const x2 = (curr.date.getTime() - firstDate) / firstAndLastDateDiff * xpOverTimeGraph.width
-        const y1 = prev.totalXP / student.totalXP * xpOverTimeGraph.height
-        const y2 = curr.totalXP / student.totalXP * xpOverTimeGraph.height
+        const y1 = prev.totalXP / user.totalXP * xpOverTimeGraph.height
+        const y2 = curr.totalXP / user.totalXP * xpOverTimeGraph.height
         if (i == 1) {
             xpOverTimeGraph.data.push({
                 type: 'circle', cx: x1, cy: y1,
@@ -247,8 +247,8 @@ const fillGraphs = (xpOverTimeGraph, levelOverTimeGraph) => {
         const next = levelChanges[i + 1]
         const x1 = (curr.date.getTime() - firstDate) / firstAndLastDateDiff * levelOverTimeGraph.width
         const x2 = (next.date.getTime() - firstDate) / firstAndLastDateDiff * levelOverTimeGraph.width
-        const y1 = (curr.level) / (student.level) * levelOverTimeGraph.height
-        const y2 = (next.level) / (student.level) * levelOverTimeGraph.height
+        const y1 = (curr.level) / (user.level) * levelOverTimeGraph.height
+        const y2 = (next.level) / (user.level) * levelOverTimeGraph.height
         if (i == 0) {
             levelOverTimeGraph.data.push({
                 type: 'circle', cx: x1, cy: y1,
@@ -360,11 +360,11 @@ const init = async () => {
     parseProjectsBaseXP()
     parseDoneProjects()
 
-    document.getElementById('login').innerText = `${student.login}`
-    document.getElementById('id').innerText = `${student.id}`
-    document.getElementById('total-xp').innerText = `${student.totalXP.toLocaleString()}`
-    //document.getElementById('level').innerText = `${getLevelFromXp(student.totalXP)}`
-    document.getElementById('level').innerText = `${student.level}`
+    document.getElementById('login').innerText = `${user.login}`
+    document.getElementById('id').innerText = `${user.id}`
+    document.getElementById('total-xp').innerText = `${user.totalXP.toLocaleString()}`
+    //document.getElementById('level').innerText = `${getLevelFromXp(user.totalXP)}`
+    document.getElementById('level').innerText = `${user.level}`
 
     const xpOverTimeGraph = {
         description: 'EXP TIMELINE',
