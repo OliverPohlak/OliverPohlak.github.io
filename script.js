@@ -24,10 +24,10 @@ const fetchGraphQL = async (query, variables) => {
     return await response.json()
 }
 
-const parsestudentInfo = async () => {
+const parseUserInfo = async () => {
     const obj = await fetchGraphQL(`
-        query get_student($login: String) {
-            student(where: {login: {_eq: $login}}) {
+        query get_user($login: String) {
+            user(where: {login: {_eq: $login}}) {
                 id
                 login
             }
@@ -36,8 +36,8 @@ const parsestudentInfo = async () => {
             login: student.login,
         }
     )
-    student.id = obj.data.student[0].id
-    student.login = obj.data.student[0].login
+    student.id = obj.data.user[0].id
+    student.login = obj.data.user[0].login
 }
 
 const parseTransactions = async () => {
@@ -47,7 +47,7 @@ const parseTransactions = async () => {
             query get_transactions($login: String, $offset: Int) {
                 transaction(
                     where: {
-                    student: { login: { _eq: $login } }
+                    user: { login: { _eq: $login } }
                     type: { _eq: "xp" }
                     _or: [{object:{type: {_eq: "project"}}}, {object: {type: {_eq: "piscine"}}}]
                 }
@@ -85,7 +85,7 @@ const parseProgresses = async () => {
             query get_progresses($login: String, $offset: Int) {
                 progress(
                     where: {
-                        student: { login: { _eq: $login } }
+                        user: { login: { _eq: $login } }
                         isDone: { _eq: true }
                         _or: [{object:{type: {_eq: "project"}}}, {object: {type: {_eq: "piscine"}}}]
                     }
@@ -353,7 +353,7 @@ const drawGraph = (graph) => {
 }
 
 const init = async () => {
-    await parsestudentInfo()
+    await parseUserInfo()
     await parseTransactions()
     await parseProgresses()
 
