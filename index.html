@@ -6,27 +6,42 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js"></script>
-  <title>graphql</title>
+  <title>Graphql User Information</title>
 </head>
 
 <body>
-  <div id="user-info">
+  <header>
+    <h1>Graphql User Information</h1>
+  </header>
+
+  <main>
     <table>
-      <tr>
-        <th>STUDENT</th>
-        <th>ID</th>
-        <th>TOTAL EXP</th>
-        <th>LEVEL</th>
-      </tr>
-      <tr>
-        <th id="login"></th>
-        <th id="id"></th>
-        <th id="total-xp"></th>
-        <th id="level"></th>
-      </tr>
+      <thead>
+        <tr>
+          <th>STUDENT</th>
+          <th>ID</th>
+          <th>TOTAL EXP</th>
+          <th>LEVEL</th>
+        </tr>
+      </thead>
+
+      <tbody id="user-info">
+        <tr>
+          <td id="login"></td>
+          <td id="id"></td>
+          <td id="total-xp"></td>
+          <td id="level"></td>
+        </tr>
+      </tbody>
     </table>
-  </div>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 
 </html>
+
+
+
+
+
