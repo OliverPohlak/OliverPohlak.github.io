@@ -1,6 +1,6 @@
 body {
-	background-image: linear-gradient(to right, #6488e4, #293e75);
-	color: #000000;
+	background-image: linear-gradient(to right, #293e75, #6488e4);
+	color: #ffffff;
 	font: 1vw Inconsolata, monospace;
 	padding: 0 100px;
   }
@@ -15,7 +15,7 @@ body {
   
   /* Text styles */
   text {
-	fill: #000000;
+	fill: #ffffff;
   }
   
   /* Table styles */
@@ -66,7 +66,7 @@ body {
   
   /* Data circle styles */
   .data circle {
-	fill: #2205a0;
+	fill: #ffffff;
   }
   
   /* Data line styles */
@@ -74,3 +74,4 @@ body {
 	stroke: #15a102;
 	stroke-width: 1;
   }
+  

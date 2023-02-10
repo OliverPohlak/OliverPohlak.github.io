@@ -1,47 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Graphql User Information</title>
+  </head>
+  <body>
+    <header>
+      <h1>Graphql User Information</h1>
+    </header>
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <title>Graphql User Information</title>
-</head>
+    <main>
+      <table>
+        <thead>
+          <tr>
+            <th>STUDENT</th>
+            <th>ID</th>
+            <th>TOTAL EXP</th>
+            <th>LEVEL</th>
+          </tr>
+        </thead>
 
-<body>
-  <header>
-    <h1>Graphql User Information</h1>
-  </header>
+        <tbody id="user-info">
+          <tr>
+            <td id="login"></td>
+            <td id="id"></td>
+            <td id="total-xp"></td>
+            <td id="level"></td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
 
-  <main>
-    <table>
-      <thead>
-        <tr>
-          <th>STUDENT</th>
-          <th>ID</th>
-          <th>TOTAL EXP</th>
-          <th>LEVEL</th>
-        </tr>
-      </thead>
-
-      <tbody id="user-info">
-        <tr>
-          <td id="login"></td>
-          <td id="id"></td>
-          <td id="total-xp"></td>
-          <td id="level"></td>
-        </tr>
-      </tbody>
-    </table>
-  </main>
-
-  <script src="script.js"></script>
-</body>
-
+    <script src="script.js"></script>
+  </body>
 </html>
-
-
-
-
-
