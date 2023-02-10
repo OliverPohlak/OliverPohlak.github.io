@@ -1,39 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Graphql User Information</title>
-  </head>
-  <body>
-    <header>
-      <h1>Graphql User Information</h1>
-    </header>
 
-    <main>
-      <table>
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>ID</th>
-            <th>Total XP</th>
-            <th>Level</th>
-          </tr>
-        </thead>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+  <title>Graphql</title>
+</head>
 
-        <tbody id="user-info">
-          <tr>
-            <td id="username"></td>
-            <td id="user-id"></td>
-            <td id="total-xp"></td>
-            <td id="user-level"></td>
-          </tr>
-        </tbody>
-      </table>
-    </main>
+<body>
+  <div id="user-info">
+    <table>
+      <tr>
+        <th>LOGIN</th>
+        <th>ID</th>
+        <th>TOTAL XP</th>
+        <th>LEVEL</th>
+      </tr>
+      <tr>
+        <th id="login"></th>
+        <th id="id"></th>
+        <th id="total-xp"></th>
+        <th id="level"></th>
+      </tr>
+    </table>
+  </div>
+</body>
 
-    <script src="script.js"></script>
-  </body>
 </html>
