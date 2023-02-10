@@ -51,8 +51,8 @@ body {
   
   /* Grid styles */
   .graph .grid {
-	stroke: #395a7a;
-	stroke-dasharray: 0;
+	stroke: #ffffff;
+	stroke-dasharray: 5;
 	stroke-width: 1;
   }
   
@@ -61,7 +61,7 @@ body {
 	font-weight: bold;
 	text-transform: uppercase;
 	font-size: 12px;
-	fill: #44a2ff;
+	fill: #ffb900;
   }
   
   /* Data circle styles */
@@ -71,7 +71,6 @@ body {
   
   /* Data line styles */
   .data line {
-	stroke: #15a102;
-	stroke-width: 1;
+	stroke: #00ffff;
+	stroke-width: 2;
   }
-  
