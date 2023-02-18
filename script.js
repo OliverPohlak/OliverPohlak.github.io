@@ -1,4 +1,5 @@
 const SCHOOL_DOMAIN = '01.kood.tech'
+//const GRAPHQL_ENDPOINT = `https://${SCHOOL_DOMAIN}/graphiql`
 const GRAPHQL_ENDPOINT = `https://${SCHOOL_DOMAIN}/api/graphql-engine/v1/graphql`
 
 const student = {
@@ -21,6 +22,7 @@ const fetchGraphQL = async (query, variables) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, variables }),
     })
+
     return await response.json()
 }
 
@@ -36,12 +38,14 @@ const parseUserInfo = async () => {
             login: student.login,
         }
     )
+
     student.id = obj.data.user[0].id
     student.login = obj.data.user[0].login
 }
 
 const parseTransactions = async () => {
     let offset = 0
+
     while (true) {
         const obj = await fetchGraphQL(`
             query get_transactions($login: String, $offset: Int) {
@@ -49,7 +53,7 @@ const parseTransactions = async () => {
                     where: {
                     user: { login: { _eq: $login } }
                     type: { _eq: "xp" }
-                    _or: [{object:{type: {_eq: "project"}}}, {object: {type: {_eq: "piscine"}}}]
+                    object: { type: { _eq: "project" } }
                 }
                 offset: $offset
             ) {
@@ -66,13 +70,17 @@ const parseTransactions = async () => {
                 offset: offset
             }
         )
+
         student.transactions.push(...obj.data.transaction)
+
         offset += 50
+
         if (obj.data.transaction.length < 50) {
             offset = 0
             break
         }
     }
+
     student.transactions.sort((a, b) =>
         new Date(a.createdAt) > new Date(b.createdAt) ? 1 : -1
     )
@@ -80,6 +88,7 @@ const parseTransactions = async () => {
 
 const parseProgresses = async () => {
     let offset = 0
+
     while (true) {
         const obj = await fetchGraphQL(`
             query get_progresses($login: String, $offset: Int) {
@@ -87,7 +96,7 @@ const parseProgresses = async () => {
                     where: {
                         user: { login: { _eq: $login } }
                         isDone: { _eq: true }
-                        _or: [{object:{type: {_eq: "project"}}}, {object: {type: {_eq: "piscine"}}}]
+                        object: { type: { _eq: "project" } }
                     }
                     distinct_on: objectId
                     offset: $offset
@@ -103,8 +112,11 @@ const parseProgresses = async () => {
                 offset: offset,
             }
         )
+
         student.progresses.push(...obj.data.progress)
+
         offset += 50
+
         if (obj.data.progress.length < 50) {
             offset = 0
             break
@@ -127,13 +139,16 @@ const parseProjectsBaseXP = () => {
 const parseDoneProjects = () => {
     student.transactions.forEach(transaction => {
         const projectBaseXP = projectsBaseXP[transaction.object.id]
+
         if (projectsBaseXP && projectBaseXP == transaction.amount) {
             student.totalXP += projectBaseXP
             const newLevel = getLevelFromXp(student.totalXP)
+            
             if (newLevel > student.level) {
                 student.level = newLevel
                 levelChanges.push({ level: newLevel, date: new Date(transaction.createdAt) })
             }
+
             student.doneProjects.push({
                 id: transaction.object.id,
                 name: transaction.object.name,
@@ -143,24 +158,25 @@ const parseDoneProjects = () => {
             })
         }
     })
-    student.doneProjects.sort((a, b) => a.date > b.date ? 1 : -1 )
-}
 
-function getLevelFromXp(xp) {
-    let level = 0
-    while (levelNeededXP(++level) < xp) {}
-    return level-1
-}
+    student.doneProjects.sort((a, b) => a.date > b.date ? 1 : -1 )}
 
-// 3 changed to 2
-function levelNeededXP(level) {
-    return Math.round(level * (176 + 2 * level * (47 + 11 * level)))
-}
+// total xp needed for this level
+const totalXPForLevel = (level) => Math.round((level * 0.66 + 1) * ((level + 2) * 150 + 50))
 
+// cumul of all the xp needed to reach this level
+const cumulXpForLevel = (level) => level > 0 ? totalXPForLevel(level) + cumulXpForLevel(level - 1) : 0
+
+// level reached for this xp
+const getLevelFromXp = (xp, level = 0) => cumulXpForLevel(level) >= xp ? level : getLevelFromXp(xp, level + 1)
+
+// get the first day of the month of a given date
 const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
 
+// get the first day of the next month of a given date
 const getFirstDayOfNextMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 1);
 
+// get all months between given dates in MM/YY format
 const getMonths = (fromDate, toDate) => {
     const fromYear = fromDate.getFullYear();
     const fromMonth = fromDate.getMonth();
@@ -172,7 +188,7 @@ const getMonths = (fromDate, toDate) => {
         const monthLimit = year === toYear ? toMonth : 11;
         for (; month <= monthLimit; month++) {
             months.push(
-                (month + 1)
+                (month.toString().length == 1 ? '0' + (month + 1) : (month + 1))
                 + '/' +
                 year.toString().substr(-2)
             )
@@ -181,89 +197,106 @@ const getMonths = (fromDate, toDate) => {
     return months;
 }
 
+// prepare graphs before drawing
 const fillGraphs = (xpOverTimeGraph, levelOverTimeGraph) => {
     const firstDate = getFirstDayOfMonth(student.doneProjects[0].date)
     const lastDate = getFirstDayOfNextMonth(student.doneProjects[student.doneProjects.length - 1].date)
     const firstAndLastDateDiff = lastDate.getTime() - firstDate.getTime()
+
     const months = getMonths(firstDate, lastDate)
 
-    //dates
+    // labels for dates
     for (let i = 0; i < months.length; i++) {
         const x = (i / (months.length - 1) * xpOverTimeGraph.width) + xpOverTimeGraph.leftOffset
         const y = xpOverTimeGraph.height + 30
         const text = months[i]
         const type = 'x-label'
+
         xpOverTimeGraph.labels.push({ x, y, text, type })
         levelOverTimeGraph.labels.push({ x, y, text, type })
     }
 
-    //exp
+    // labels for xp of "xp over date" graph
     for (let i = 0; i <= 10; i++) {
         const x = xpOverTimeGraph.leftOffset * 0.8
         const y = (i == 0 ? 0 : xpOverTimeGraph.height * (i / 10)) + 5
         const text = (i == 10 ? 0 : Math.round(student.totalXP * (1 - (i / 10)))).toLocaleString()
         const type = 'y-label'
+
         xpOverTimeGraph.labels.push({ x, y, text, type })
     }
 
-    //levels
+    // labels for levels of "level over date" graph
     for (let i = 0; i <= student.level; i++) {
         const x = levelOverTimeGraph.leftOffset * 0.8
         const y = (i == 0 ? levelOverTimeGraph.height : (levelOverTimeGraph.height * (1 - (i / student.level)))) + 5
         const text = i
         const type = 'y-label'
+
         levelOverTimeGraph.labels.push({ x, y, text, type })
     }
 
-    //exp over date
+    // data for "xp over date" graph
     for (let i = 1; i < student.doneProjects.length; i++) {
         const curr = student.doneProjects[i]
         const prev = student.doneProjects[i - 1]
+
         const x1 = (prev.date.getTime() - firstDate) / firstAndLastDateDiff * xpOverTimeGraph.width
         const x2 = (curr.date.getTime() - firstDate) / firstAndLastDateDiff * xpOverTimeGraph.width
+
         const y1 = prev.totalXP / student.totalXP * xpOverTimeGraph.height
         const y2 = curr.totalXP / student.totalXP * xpOverTimeGraph.height
+
         if (i == 1) {
             xpOverTimeGraph.data.push({
                 type: 'circle', cx: x1, cy: y1,
-                text: `0 → ${prev.totalXP.toLocaleString()} exp\n${prev.date.toLocaleDateString("en-GB")}`
+                text: `0 → ${prev.totalXP.toLocaleString()} XP\n${prev.date.toLocaleDateString("en-GB")}`
             })
+
             xpOverTimeGraph.data.push({
                 type: 'line',
                 x1: 0, x2: x1,
                 y1: 0, y2: y1
             })
         }
+
         xpOverTimeGraph.data.push({
             type: 'circle', cx: x2, cy: y2,
-            text: `${prev.totalXP.toLocaleString()} → ${curr.totalXP.toLocaleString()} exp\n${curr.date.toLocaleDateString("en-GB")}`
+            text: `${prev.totalXP.toLocaleString()} → ${curr.totalXP.toLocaleString()} XP\n${curr.date.toLocaleDateString("en-GB")}`
         })
+
         xpOverTimeGraph.data.push({ type: 'line', x1, x2, y1, y2 })
     }
-    
-    //level over date
+
+    // data for "level over date" graph
     for (let i = 0; i < levelChanges.length - 1; i++) {
         const curr = levelChanges[i]
         const next = levelChanges[i + 1]
+
         const x1 = (curr.date.getTime() - firstDate) / firstAndLastDateDiff * levelOverTimeGraph.width
         const x2 = (next.date.getTime() - firstDate) / firstAndLastDateDiff * levelOverTimeGraph.width
+
         const y1 = (curr.level) / (student.level) * levelOverTimeGraph.height
         const y2 = (next.level) / (student.level) * levelOverTimeGraph.height
+
         if (i == 0) {
             levelOverTimeGraph.data.push({
                 type: 'circle', cx: x1, cy: y1,
                 text: `0 → ${curr.level} level\n${curr.date.toLocaleDateString("en-GB")}`
             })
+
             levelOverTimeGraph.data.push({
                 type: 'line',
                 x1: 0, x2: x1,
                 y1: 0, y2: y1
             })
         }
+
         levelOverTimeGraph.data.push({
             type: 'circle', cx: x2, cy: y2,
             text: `${curr.level} → ${next.level} level\n${next.date.toLocaleDateString("en-GB")}`
         })
+
         levelOverTimeGraph.data.push({ type: 'line', x1, x2, y1, y2 })
     }
 }
@@ -317,9 +350,11 @@ const drawGraph = (graph) => {
 
     for (let i = 0; i < graph.labels.length; i++) {
         const label = document.createElement('text')
+
         label.setAttribute('x', graph.labels[i].x)
         label.setAttribute('y', graph.labels[i].y)
         label.innerText = graph.labels[i].text
+
         if (graph.labels[i].type == 'x-label') {
             xLabels.append(label)
         }
@@ -335,12 +370,14 @@ const drawGraph = (graph) => {
     for (let i = 0; i < graph.data.length; i++) {
         const el = document.createElement(graph.data[i].type)
         data.append(el)
+
         if (graph.data[i].type == 'circle') {
             el.setAttribute('cx', graph.data[i].cx + graph.leftOffset)
             el.setAttribute('cy', graph.topOffset - graph.data[i].cy)
             el.setAttribute('r', 5)
             el.innerHTML = `<title>${graph.data[i].text}</title>`
         }
+
         if (graph.data[i].type == 'line') {
             el.setAttribute('x1', graph.data[i].x1 + graph.leftOffset)
             el.setAttribute('x2', graph.data[i].x2 + graph.leftOffset)
@@ -363,11 +400,10 @@ const init = async () => {
     document.getElementById('login').innerText = `${student.login}`
     document.getElementById('id').innerText = `${student.id}`
     document.getElementById('total-xp').innerText = `${student.totalXP.toLocaleString()}`
-    //document.getElementById('level').innerText = `${getLevelFromXp(student.totalXP)}`
     document.getElementById('level').innerText = `${student.level}`
 
     const xpOverTimeGraph = {
-        description: 'EXP TIMELINE',
+        description: 'XP OVER TIME',
         width: 1000,
         height: 500,
         topOffset: 500,
@@ -377,7 +413,7 @@ const init = async () => {
     }
 
     const levelOverTimeGraph = {
-        description: "LEVEL TIMELINE",
+        description: "LEVEL OVER TIME",
         width: 1000,
         height: 500,
         topOffset: 500,
@@ -387,6 +423,7 @@ const init = async () => {
     }
 
     fillGraphs(xpOverTimeGraph, levelOverTimeGraph)
+
     drawGraph(xpOverTimeGraph)
     drawGraph(levelOverTimeGraph)
 }
