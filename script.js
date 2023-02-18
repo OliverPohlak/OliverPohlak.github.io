@@ -6,7 +6,7 @@ const student = {
     id: 0,
     login: 'OliverPohlak',
     totalXP: 0,
-    level: 0,
+    level: 28,
     transactions: [],
     progresses: [],
     doneProjects: [],
